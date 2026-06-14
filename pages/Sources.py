@@ -24,6 +24,12 @@ with st.form("add_source"):
     name = st.text_input("Source name")
     url = st.text_input("RSS feed URL")
     theme = st.selectbox("Theme", list(theme_map.keys()) if theme_map else [])
+    fetch_interval = st.select_slider(
+        "Fetch interval",
+        options=[1, 2, 6, 12, 24],
+        value=2,
+        format_func=lambda x: f"Every {x}h"
+    )
     submitted = st.form_submit_button("Add")
 
     if submitted and url and theme:
@@ -34,6 +40,7 @@ with st.form("add_source"):
                 "theme_id": theme_map[theme],
                 "type": "rss",
                 "active": True,
+                "fetch_interval_hours": fetch_interval,
             })
         if resp.status_code == 201:
             st.success(f"Source '{name}' added.")
@@ -57,15 +64,34 @@ for source in sources:
         continue
 
     status = "🟢" if source["active"] else "🔴"
-    col1, col2, col3 = st.columns([4, 1, 1])
-    col1.markdown(f"{status} **{source['name'] or source['url']}** — `{theme_name}`")
+    interval = source.get("fetch_interval_hours", 2)
+
+    col1, col2, col3, col4 = st.columns([3, 1, 1, 1])
+    col1.markdown(f"{status} **{source['name'] or source['url']}** — `{theme_name}` — every `{interval}h`")
 
     if col2.button("Toggle", key=f"toggle_{source['id']}"):
         with httpx.Client() as client:
             client.post(f"{API_URL}/sources/{source['id']}/toggle")
         st.rerun()
 
-    if col3.button("Delete", key=f"del_{source['id']}"):
+    # Edit interval inline
+    new_interval = col3.selectbox(
+        "Interval",
+        [1, 2, 6, 12, 24],
+        index=[1, 2, 6, 12, 24].index(interval) if interval in [1, 2, 6, 12, 24] else 1,
+        key=f"interval_{source['id']}",
+        label_visibility="collapsed"
+    )
+    if new_interval != interval:
+        with httpx.Client() as client:
+            client.patch(f"{API_URL}/sources/{source['id']}", json={
+                "theme_id": source["theme_id"],
+                "url": source["url"],
+                "fetch_interval_hours": new_interval,
+            })
+        st.rerun()
+
+    if col4.button("Delete", key=f"del_{source['id']}"):
         with httpx.Client() as client:
             client.delete(f"{API_URL}/sources/{source['id']}")
         st.rerun()
