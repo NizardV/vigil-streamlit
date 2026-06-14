@@ -6,7 +6,7 @@ import plotly.graph_objects as go
 import os
 from datetime import datetime, timedelta
 
-API_URL = os.getenv("API_URL", "http://backend:8000/api")
+API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
 st.set_page_config(page_title="Stats - Vigil", layout="wide")
 st.title("Statistics")
