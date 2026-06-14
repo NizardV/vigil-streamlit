@@ -55,7 +55,7 @@ else:
         col1.markdown(f"{status} `{webhook['type']}` — **{theme_name}**  \n{webhook['url'][:60]}...")
 
         if col2.button("Test", key=f"test_{webhook['id']}"):
-            with httpx.Client() as client:
+            with httpx.Client(timeout=30.0) as client:
                 resp = client.post(f"{API_URL}/digests/trigger/{webhook['theme_id']}")
             if resp.status_code == 200:
                 st.success("Digest triggered — check your Discord!")
