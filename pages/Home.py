@@ -48,7 +48,7 @@ try:
         for a in top:
             score = a["analysis"]["relevance_score"]
             color = "🟢" if score >= 7 else "🟡" if score >= 4 else "🔴"
-            st.markdown(f"{color} **[{a[''title'']}]({a[''url'']})** — Score : `{score}/10`")
+            st.markdown(f"{color} **[{a['title']}]({a['url']})** — Score : `{score}/10`")
             st.caption(a["analysis"].get("summary", ""))
     else:
         st.info("Aucun article analysé pour l''instant.")
