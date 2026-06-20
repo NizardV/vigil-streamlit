@@ -4,24 +4,17 @@ from auth import is_authenticated, logout, fetch_user_info, refresh_access_token
 
 st.set_page_config(page_title="Vigil", layout="wide", page_icon="🔍")
 
-# ── Cookie manager — instancié une seule fois ─────────────
-if "cookie_controller" not in st.session_state:
-    st.session_state["cookie_controller"] = CookieController()
-
-cookie = st.session_state["cookie_controller"]
+# ── Cookie manager ────────────────────────────────────────
+cookie = CookieController()
 
 # ── Session restore from cookie ───────────────────────────
 if not is_authenticated():
-    # Le cookie n'est pas disponible au premier rendu — on attend le second
-    if not st.session_state.get("_cookie_checked"):
-        st.session_state["_cookie_checked"] = True
-        st.rerun()
-    else:
-        refresh_token = cookie.get("vigil_refresh_token")
-        if refresh_token:
-            st.session_state["refresh_token"] = refresh_token
-            if refresh_access_token():
-                fetch_user_info()
+    refresh_token = cookie.get("vigil_refresh_token")
+    if refresh_token:
+        st.session_state["refresh_token"] = refresh_token
+        if refresh_access_token():
+            fetch_user_info()
+            st.rerun()
 
 if is_authenticated() and not st.session_state.get("user_email"):
     fetch_user_info()
