@@ -1,12 +1,10 @@
 import streamlit as st
-from streamlit_cookies_controller import CookieController
+import extra_streamlit_components as stx
 from auth import is_authenticated, logout, fetch_user_info, refresh_access_token
 
 st.set_page_config(page_title="Vigil", layout="wide", page_icon="🔍")
 
-if "cookie" not in st.session_state:
-    st.session_state["cookie"] = CookieController()
-cookie = st.session_state["cookie"]
+cookie = stx.CookieManager()
 
 # ── Session restore from cookie ───────────────────────────
 if not is_authenticated():
