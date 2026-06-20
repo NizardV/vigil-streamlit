@@ -1,23 +1,25 @@
 import streamlit as st
 import httpx
 import os
+from auth import require_auth, get_headers
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
 st.set_page_config(page_title="Webhooks - Vigil", layout="wide")
+
+require_auth()
+
 st.title("Webhooks")
 
 try:
     with httpx.Client() as client:
-        themes = client.get(f"{API_URL}/themes/").json()
-        webhooks = client.get(f"{API_URL}/webhooks/").json()
+        themes = client.get(f"{API_URL}/themes/", headers=get_headers()).json()
+        webhooks = client.get(f"{API_URL}/webhooks/", headers=get_headers()).json()
 except Exception as e:
     st.error(f"Could not reach the API: {e}")
     st.stop()
 
 theme_map = {t["name"]: t["id"] for t in themes}
-
-# ── Add webhook ───────────────────────────────────────────
 
 with st.form("add_webhook"):
     st.subheader("Add a webhook")
@@ -33,14 +35,12 @@ with st.form("add_webhook"):
                 "url": url,
                 "type": wtype,
                 "active": True,
-            })
+            }, headers=get_headers())
         if resp.status_code == 201:
             st.success("Webhook added.")
             st.rerun()
         else:
             st.error(f"Error: {resp.text}")
-
-# ── Test webhook ──────────────────────────────────────────
 
 st.subheader("Configured webhooks")
 
@@ -56,7 +56,8 @@ else:
 
         if col2.button("Test", key=f"test_{webhook['id']}"):
             with httpx.Client(timeout=30.0) as client:
-                resp = client.post(f"{API_URL}/digests/trigger/{webhook['theme_id']}")
+                resp = client.post(f"{API_URL}/digests/trigger/{webhook['theme_id']}",
+                                   headers=get_headers())
             if resp.status_code == 200:
                 st.success("Digest triggered — check your Discord!")
             else:
@@ -64,5 +65,5 @@ else:
 
         if col3.button("Delete", key=f"del_{webhook['id']}"):
             with httpx.Client() as client:
-                client.delete(f"{API_URL}/webhooks/{webhook['id']}")
+                client.delete(f"{API_URL}/webhooks/{webhook['id']}", headers=get_headers())
             st.rerun()

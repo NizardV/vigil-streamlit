@@ -1,16 +1,20 @@
 ﻿import streamlit as st
 import httpx
 import os
+from auth import require_auth, get_headers
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
 st.set_page_config(page_title="Sources - Vigil", layout="wide")
+
+require_auth()
+
 st.title("Sources")
 
 try:
     with httpx.Client() as client:
-        themes = client.get(f"{API_URL}/themes/").json()
-        sources = client.get(f"{API_URL}/sources/").json()
+        themes = client.get(f"{API_URL}/themes/", headers=get_headers()).json()
+        sources = client.get(f"{API_URL}/sources/", headers=get_headers()).json()
 except Exception as e:
     st.error(f"Could not reach the API: {e}")
     st.stop()
@@ -41,7 +45,7 @@ with st.form("add_source"):
                 "type": "rss",
                 "active": True,
                 "fetch_interval_hours": fetch_interval,
-            })
+            }, headers=get_headers())
         if resp.status_code == 201:
             st.success(f"Source '{name}' added.")
             st.rerun()
@@ -71,10 +75,9 @@ for source in sources:
 
     if col2.button("Toggle", key=f"toggle_{source['id']}"):
         with httpx.Client() as client:
-            client.post(f"{API_URL}/sources/{source['id']}/toggle")
+            client.post(f"{API_URL}/sources/{source['id']}/toggle", headers=get_headers())
         st.rerun()
 
-    # Edit interval inline
     new_interval = col3.selectbox(
         "Interval",
         [1, 2, 6, 12, 24],
@@ -88,10 +91,10 @@ for source in sources:
                 "theme_id": source["theme_id"],
                 "url": source["url"],
                 "fetch_interval_hours": new_interval,
-            })
+            }, headers=get_headers())
         st.rerun()
 
     if col4.button("Delete", key=f"del_{source['id']}"):
         with httpx.Client() as client:
-            client.delete(f"{API_URL}/sources/{source['id']}")
+            client.delete(f"{API_URL}/sources/{source['id']}", headers=get_headers())
         st.rerun()

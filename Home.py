@@ -3,10 +3,21 @@ import httpx
 import pandas as pd
 import plotly.express as px
 import os
+from auth import require_auth, get_headers, logout
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
 st.set_page_config(page_title="Vigil", layout="wide")
+
+require_auth()
+
+# ── Sidebar ───────────────────────────────────────────────
+with st.sidebar:
+    st.markdown(f"**{st.session_state.get('user_email', 'User')}**")
+    if st.button("Logout", use_container_width=True):
+        logout()
+
+# ── Main ──────────────────────────────────────────────────
 st.title("Vigil - Tech Watch Dashboard")
 st.caption("Automated tech watch system with LLM scoring and feedback loop")
 
@@ -14,10 +25,11 @@ col1, col2, col3, col4 = st.columns(4)
 
 try:
     with httpx.Client() as client:
-        articles = client.get(f"{API_URL}/articles/?limit=500").json()
-        themes = client.get(f"{API_URL}/themes/").json()
-        sources = client.get(f"{API_URL}/sources/").json()
-        digests = client.get(f"{API_URL}/digests/").json()
+        headers = get_headers()
+        articles = client.get(f"{API_URL}/articles/?limit=500", headers=headers).json()
+        themes = client.get(f"{API_URL}/themes/", headers=headers).json()
+        sources = client.get(f"{API_URL}/sources/", headers=headers).json()
+        digests = client.get(f"{API_URL}/digests/", headers=headers).json()
 
     processed = [a for a in articles if a["processed"]]
     scores = [a["analysis"]["relevance_score"] for a in processed if a.get("analysis")]

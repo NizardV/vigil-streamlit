@@ -1,20 +1,22 @@
 import streamlit as st
 import httpx
 import os
+from auth import require_auth, get_headers
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
 st.set_page_config(page_title="Themes - Vigil", layout="wide")
+
+require_auth()
+
 st.title("Themes")
 
 try:
     with httpx.Client() as client:
-        themes = client.get(f"{API_URL}/themes/").json()
+        themes = client.get(f"{API_URL}/themes/", headers=get_headers()).json()
 except Exception as e:
     st.error(f"Could not reach the API: {e}")
     st.stop()
-
-# ── Add theme ─────────────────────────────────────────────
 
 with st.form("add_theme"):
     st.subheader("Add a theme")
@@ -35,14 +37,12 @@ with st.form("add_theme"):
                 "keywords": keywords or None,
                 "digest_hour": digest_hour,
                 "digest_enabled": digest_enabled,
-            })
+            }, headers=get_headers())
         if resp.status_code == 201:
             st.success(f"Theme '{name}' created.")
             st.rerun()
         else:
             st.error(f"Error: {resp.text}")
-
-# ── Theme list ────────────────────────────────────────────
 
 st.subheader("Configured themes")
 
@@ -73,11 +73,11 @@ else:
                             "name": theme["name"],
                             "digest_enabled": new_enabled,
                             "digest_hour": new_hour,
-                        })
+                        }, headers=get_headers())
                     st.success("Settings saved.")
                     st.rerun()
 
             if st.button("Delete", key=f"del_theme_{theme['id']}"):
                 with httpx.Client() as client:
-                    client.delete(f"{API_URL}/themes/{theme['id']}")
+                    client.delete(f"{API_URL}/themes/{theme['id']}", headers=get_headers())
                 st.rerun()

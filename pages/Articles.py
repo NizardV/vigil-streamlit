@@ -1,15 +1,19 @@
 ﻿import streamlit as st
 import httpx
 import os
+from auth import require_auth, get_headers
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
 st.set_page_config(page_title="Articles - Vigil", layout="wide")
+
+require_auth()
+
 st.title("Articles")
 
 try:
     with httpx.Client() as client:
-        themes = client.get(f"{API_URL}/themes/").json()
+        themes = client.get(f"{API_URL}/themes/", headers=get_headers()).json()
 except Exception as e:
     st.error(f"Could not reach the API: {e}")
     st.stop()
@@ -33,7 +37,7 @@ if theme_id:
 
 try:
     with httpx.Client() as client:
-        articles = client.get(f"{API_URL}/articles/", params=params).json()
+        articles = client.get(f"{API_URL}/articles/", params=params, headers=get_headers()).json()
 except Exception as e:
     st.error(f"Could not load articles: {e}")
     st.stop()
@@ -67,7 +71,7 @@ for article in filtered:
                 client.post(f"{API_URL}/feedback/", json={
                     "article_id": article["id"],
                     "rating": 1
-                })
+                }, headers=get_headers())
             st.success("Feedback saved.")
             st.rerun()
 
@@ -76,5 +80,5 @@ for article in filtered:
                 client.post(f"{API_URL}/feedback/", json={
                     "article_id": article["id"],
                     "rating": -1
-                })
+                }, headers=get_headers())
             st.rerun()
