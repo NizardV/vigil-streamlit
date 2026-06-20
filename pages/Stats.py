@@ -3,13 +3,11 @@ import httpx
 import pandas as pd
 import plotly.express as px
 import os
-from auth import require_auth, get_headers
+from auth import get_headers
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
 st.set_page_config(page_title="Stats - Vigil", layout="wide")
-
-require_auth()
 
 st.title("Statistics")
 

@@ -1,13 +1,11 @@
 ﻿import streamlit as st
 import httpx
 import os
-from auth import require_auth, get_headers
+from auth import get_headers
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
 st.set_page_config(page_title="Sources - Vigil", layout="wide")
-
-require_auth()
 
 st.title("Sources")
 
