@@ -1,6 +1,4 @@
 import streamlit as st
-import json
-from streamlit_js_eval import streamlit_js_eval
 from auth import is_authenticated, logout, fetch_user_info
 
 st.set_page_config(page_title="Vigil", layout="wide", page_icon="🔍")
