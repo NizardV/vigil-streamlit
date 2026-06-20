@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
-cookie = st.session_state.get("cookie")
+cookie = st.session_state.get("cookie_controller")
 
 # ── TOTP step ────────────────────────────────────────────
 if st.session_state.get("totp_temp_token"):

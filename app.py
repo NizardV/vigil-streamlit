@@ -1,26 +1,32 @@
 import streamlit as st
-import extra_streamlit_components as stx
+from streamlit_cookies_controller import CookieController
 from auth import is_authenticated, logout, fetch_user_info, refresh_access_token
 
 st.set_page_config(page_title="Vigil", layout="wide", page_icon="🔍")
 
-if "cookie" not in st.session_state:
-    st.session_state["cookie"] = stx.CookieManager()
-cookie = st.session_state["cookie"]
+# ── Cookie manager — instancié une seule fois ─────────────
+if "cookie_controller" not in st.session_state:
+    st.session_state["cookie_controller"] = CookieController()
+
+cookie = st.session_state["cookie_controller"]
 
 # ── Session restore from cookie ───────────────────────────
 if not is_authenticated():
-    refresh_token = cookie.get("vigil_refresh_token")
-    if refresh_token:
-        st.session_state["refresh_token"] = refresh_token
-        if refresh_access_token():
-            fetch_user_info()
+    # Le cookie n'est pas disponible au premier rendu — on attend le second
+    if not st.session_state.get("_cookie_checked"):
+        st.session_state["_cookie_checked"] = True
+        st.rerun()
+    else:
+        refresh_token = cookie.get("vigil_refresh_token")
+        if refresh_token:
+            st.session_state["refresh_token"] = refresh_token
+            if refresh_access_token():
+                fetch_user_info()
 
 if is_authenticated() and not st.session_state.get("user_email"):
     fetch_user_info()
 
 # ── Navigation ────────────────────────────────────────────
-
 if not is_authenticated():
     pg = st.navigation([
         st.Page("login.py", title="Login", icon="🔐"),
