@@ -14,6 +14,19 @@ def get_headers() -> dict:
     return {"Authorization": f"Bearer {token}"}
 
 
+def fetch_user_info():
+    """Fetch and store user info from /me endpoint."""
+    try:
+        with httpx.Client() as client:
+            resp = client.get(f"{API_URL}/auth/me", headers=get_headers())
+        if resp.status_code == 200:
+            data = resp.json()
+            st.session_state["user_email"] = data["email"]
+            st.session_state["totp_enabled"] = data["totp_enabled"]
+    except Exception:
+        pass
+
+
 def logout():
     refresh_token = st.session_state.get("refresh_token", "")
     if refresh_token:

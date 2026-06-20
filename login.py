@@ -1,6 +1,7 @@
 import streamlit as st
 import httpx
 import os
+from auth import fetch_user_info
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
@@ -28,6 +29,7 @@ if st.session_state.get("totp_temp_token"):
                     st.session_state["access_token"] = data["access_token"]
                     st.session_state["refresh_token"] = data["refresh_token"]
                     st.session_state.pop("totp_temp_token", None)
+                    fetch_user_info()
                     st.rerun()
                 else:
                     st.error("Invalid authentication code. Please try again.")
@@ -44,7 +46,6 @@ if st.session_state.get("totp_temp_token"):
 st.title("Welcome to Vigil")
 st.caption("Automated tech watch system")
 
-# Show success message after registration
 if st.session_state.get("register_success"):
     st.success("Account created! Please check your email to confirm your account.")
     st.session_state.pop("register_success", None)
@@ -75,7 +76,7 @@ with tab_login:
                     else:
                         st.session_state["access_token"] = data["access_token"]
                         st.session_state["refresh_token"] = data["refresh_token"]
-                        st.session_state["user_email"] = email
+                        fetch_user_info()
                         st.rerun()
                 elif resp.status_code == 403:
                     detail = resp.json().get("detail", "")
