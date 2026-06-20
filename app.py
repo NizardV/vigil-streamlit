@@ -7,35 +7,17 @@ st.set_page_config(page_title="Vigil", layout="wide", page_icon="🔍")
 
 API_URL_PUBLIC = "https://vigil.projet-cyna.fr/api"
 
-# ── Session restore via cookie httpOnly ───────────────────
+# ── Session restore via query param ──────────────────────
 if not is_authenticated():
-    if not st.session_state.get("_restore_attempted"):
-        # Premier rendu — lance le JS, résultat sera None
-        result = streamlit_js_eval(
-            js_expressions=f"""
-                fetch('{API_URL_PUBLIC}/auth/session/me', {{
-                    method: 'GET',
-                    credentials: 'include'
-                }})
-                .then(r => r.ok ? r.json() : null)
-                .then(data => data ? JSON.stringify(data) : null)
-            """,
-            key="restore_session"
-        )
-        if result:
-            # Deuxième rendu — le JS a retourné le résultat
-            data = json.loads(result)
-            st.session_state["access_token"] = data["access_token"]
-            st.session_state["refresh_token"] = data["refresh_token"]
-            st.session_state["_restore_attempted"] = True
+    session_id = st.query_params.get("session_id")
+    if session_id:
+        if restore_session(session_id):
+            st.query_params.clear()
             fetch_user_info()
             st.rerun()
-        # Si result est None, Streamlit rerun automatiquement quand le JS finit
 
 if is_authenticated() and not st.session_state.get("user_email"):
-    print(f"[DEBUG] fetching user info, access_token: {st.session_state.get('access_token', 'MISSING')[:20]}")
     fetch_user_info()
-    print(f"[DEBUG] after fetch, user_email: {st.session_state.get('user_email', 'MISSING')}")
 
 # ── Navigation ────────────────────────────────────────────
 if not is_authenticated():

@@ -63,7 +63,7 @@ def refresh_access_token() -> bool:
     return False
 
 
-def create_session_cookie(access_token: str, refresh_token: str) -> bool:
+def create_session_cookie(access_token: str, refresh_token: str) -> str | None:
     try:
         with httpx.Client() as client:
             resp = client.post(f"{API_URL}/auth/session", json={
@@ -71,6 +71,21 @@ def create_session_cookie(access_token: str, refresh_token: str) -> bool:
                 "refresh_token": refresh_token,
                 "token_type": "bearer"
             })
-        return resp.status_code == 200
+        if resp.status_code == 200:
+            return resp.json().get("session_id")
     except Exception:
-        return False
+        pass
+    return None
+
+def restore_session(session_id: str) -> bool:
+    try:
+        with httpx.Client() as client:
+            resp = client.get(f"{API_URL}/auth/session/{session_id}")
+        if resp.status_code == 200:
+            data = resp.json()
+            st.session_state["access_token"] = data["access_token"]
+            st.session_state["refresh_token"] = data["refresh_token"]
+            return True
+    except Exception:
+        pass
+    return False
