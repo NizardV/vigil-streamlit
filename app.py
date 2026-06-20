@@ -1,7 +1,18 @@
 import streamlit as st
-from auth import is_authenticated, logout, fetch_user_info
+from streamlit_cookies_controller import CookieController
+from auth import is_authenticated, logout, fetch_user_info, refresh_access_token
 
 st.set_page_config(page_title="Vigil", layout="wide", page_icon="🔍")
+
+cookie = CookieController()
+
+# ── Session restore from cookie ───────────────────────────
+if not is_authenticated():
+    refresh_token = cookie.get("vigil_refresh_token")
+    if refresh_token:
+        st.session_state["refresh_token"] = refresh_token
+        if refresh_access_token():
+            fetch_user_info()
 
 if is_authenticated() and not st.session_state.get("user_email"):
     fetch_user_info()
@@ -18,6 +29,7 @@ else:
         st.text(st.session_state.get('user_email', 'User'))
         st.divider()
         if st.button("Logout", use_container_width=True):
+            cookie.remove("vigil_refresh_token")
             logout()
 
     pg = st.navigation([
