@@ -11,10 +11,11 @@ cookie = CookieController()
 if not is_authenticated():
     refresh_token = cookie.get("vigil_refresh_token")
     if refresh_token:
-        st.session_state["refresh_token"] = refresh_token
-        if refresh_access_token():
-            fetch_user_info()
-            st.rerun()
+        with st.spinner("Restoring session..."):
+            st.session_state["refresh_token"] = refresh_token
+            if refresh_access_token():
+                fetch_user_info()
+                st.rerun()
 
 if is_authenticated() and not st.session_state.get("user_email"):
     fetch_user_info()
