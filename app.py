@@ -15,7 +15,7 @@ if not is_authenticated():
     ], position="hidden")
 else:
     with st.sidebar:
-        st.markdown(f"👤 **{st.session_state.get('user_email', 'User')}**")
+        st.text(st.session_state.get('user_email', 'User'))
         st.divider()
         if st.button("Logout", use_container_width=True):
             logout()
