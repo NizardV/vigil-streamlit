@@ -1,7 +1,7 @@
 import streamlit as st
 import httpx
 import os
-from auth import fetch_user_info, create_session_cookie, get_session_id
+from auth import fetch_user_info, create_session_cookie
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
