@@ -2,7 +2,6 @@ import streamlit as st
 import httpx
 import os
 from auth import fetch_user_info
-from datetime import datetime, timedelta
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
@@ -32,7 +31,7 @@ if st.session_state.get("totp_temp_token"):
                     st.session_state["access_token"] = data["access_token"]
                     st.session_state["refresh_token"] = data["refresh_token"]
                     st.session_state.pop("totp_temp_token", None)
-                    cookie.set("vigil_refresh_token", data["refresh_token"], expires_at=datetime.now() + timedelta(days=30))
+                    cookie.set("vigil_refresh_token", data["refresh_token"], max_age=30*24*60*60)
                     fetch_user_info()
                     st.rerun()
                 else:
@@ -80,7 +79,7 @@ with tab_login:
                     else:
                         st.session_state["access_token"] = data["access_token"]
                         st.session_state["refresh_token"] = data["refresh_token"]
-                        cookie.set("vigil_refresh_token", data["refresh_token"], expires_at=datetime.now() + timedelta(days=30))
+                        cookie.set("vigil_refresh_token", data["refresh_token"], max_age=30*24*60*60)
                         fetch_user_info()
                         st.rerun()
                 elif resp.status_code == 403:
