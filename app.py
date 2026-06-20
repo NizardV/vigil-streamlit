@@ -4,7 +4,9 @@ from auth import is_authenticated, logout, fetch_user_info, refresh_access_token
 
 st.set_page_config(page_title="Vigil", layout="wide", page_icon="🔍")
 
-cookie = stx.CookieManager()
+if "cookie" not in st.session_state:
+    st.session_state["cookie"] = stx.CookieManager()
+cookie = st.session_state["cookie"]
 
 # ── Session restore from cookie ───────────────────────────
 if not is_authenticated():

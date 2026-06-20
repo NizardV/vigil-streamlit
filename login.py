@@ -1,12 +1,11 @@
 import streamlit as st
-import extra_streamlit_components as stx
 import httpx
 import os
 from auth import fetch_user_info
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
-cookie = stx.CookieManager()
+cookie = st.session_state.get("cookie")
 
 # ── TOTP step ────────────────────────────────────────────
 if st.session_state.get("totp_temp_token"):
