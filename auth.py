@@ -15,7 +15,6 @@ def get_headers() -> dict:
 
 
 def fetch_user_info():
-    """Fetch and store user info from /me endpoint."""
     try:
         with httpx.Client() as client:
             resp = client.get(f"{API_URL}/auth/me", headers=get_headers())
@@ -62,3 +61,16 @@ def refresh_access_token() -> bool:
     except Exception:
         pass
     return False
+
+
+def create_session_cookie(access_token: str, refresh_token: str) -> bool:
+    try:
+        with httpx.Client() as client:
+            resp = client.post(f"{API_URL}/auth/session", json={
+                "access_token": access_token,
+                "refresh_token": refresh_token,
+                "token_type": "bearer"
+            })
+        return resp.status_code == 200
+    except Exception:
+        return False

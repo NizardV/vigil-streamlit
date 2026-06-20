@@ -1,24 +1,41 @@
 import streamlit as st
-from streamlit_cookies_controller import CookieController
-from auth import is_authenticated, logout, fetch_user_info, refresh_access_token
+import json
+from streamlit_js_eval import streamlit_js_eval
+from auth import is_authenticated, logout, fetch_user_info
 
 st.set_page_config(page_title="Vigil", layout="wide", page_icon="🔍")
 
-# ── Cookie manager ────────────────────────────────────────
-cookie = CookieController()
+API_URL_PUBLIC = "https://vigil.projet-cyna.fr/api"
 
-# ── Session restore from cookie ───────────────────────────
+# ── Session restore via cookie httpOnly ───────────────────
 if not is_authenticated():
-    refresh_token = cookie.get("vigil_refresh_token")
-    if refresh_token:
-        with st.spinner("Restoring session..."):
-            st.session_state["refresh_token"] = refresh_token
-            if refresh_access_token():
-                fetch_user_info()
-                st.rerun()
+    if not st.session_state.get("_restore_attempted"):
+        # Premier rendu — lance le JS, résultat sera None
+        result = streamlit_js_eval(
+            js_expressions=f"""
+                fetch('{API_URL_PUBLIC}/auth/session/me', {{
+                    method: 'GET',
+                    credentials: 'include'
+                }})
+                .then(r => r.ok ? r.json() : null)
+                .then(data => data ? JSON.stringify(data) : null)
+            """,
+            key="restore_session"
+        )
+        if result:
+            # Deuxième rendu — le JS a retourné le résultat
+            data = json.loads(result)
+            st.session_state["access_token"] = data["access_token"]
+            st.session_state["refresh_token"] = data["refresh_token"]
+            st.session_state["_restore_attempted"] = True
+            fetch_user_info()
+            st.rerun()
+        # Si result est None, Streamlit rerun automatiquement quand le JS finit
 
 if is_authenticated() and not st.session_state.get("user_email"):
+    print(f"[DEBUG] fetching user info, access_token: {st.session_state.get('access_token', 'MISSING')[:20]}")
     fetch_user_info()
+    print(f"[DEBUG] after fetch, user_email: {st.session_state.get('user_email', 'MISSING')}")
 
 # ── Navigation ────────────────────────────────────────────
 if not is_authenticated():
@@ -31,7 +48,15 @@ else:
         st.text(st.session_state.get('user_email', 'User'))
         st.divider()
         if st.button("Logout", use_container_width=True):
-            cookie.remove("vigil_refresh_token")
+            streamlit_js_eval(
+                js_expressions=f"""
+                    fetch('{API_URL_PUBLIC}/auth/session/me', {{
+                        method: 'DELETE',
+                        credentials: 'include'
+                    }})
+                """,
+                key="delete_session"
+            )
             logout()
 
     pg = st.navigation([
