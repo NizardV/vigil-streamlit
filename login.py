@@ -4,18 +4,9 @@ import os
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
-st.set_page_config(page_title="Login - Vigil", layout="centered")
-
-# Redirect if already authenticated
-if st.session_state.get("access_token"):
-    st.switch_page("Home.py")
-
-st.title("Welcome to Vigil")
-st.caption("Automated tech watch system")
-
 # ── TOTP step ────────────────────────────────────────────
 if st.session_state.get("totp_temp_token"):
-    st.subheader("Two-Factor Authentication")
+    st.title("Two-Factor Authentication")
     st.info("Enter the 6-digit code from your authenticator app.")
 
     with st.form("totp_form"):
@@ -37,8 +28,7 @@ if st.session_state.get("totp_temp_token"):
                     st.session_state["access_token"] = data["access_token"]
                     st.session_state["refresh_token"] = data["refresh_token"]
                     st.session_state.pop("totp_temp_token", None)
-                    st.success("Logged in successfully!")
-                    st.switch_page("Home.py")
+                    st.rerun()
                 else:
                     st.error("Invalid authentication code. Please try again.")
             except Exception as e:
@@ -51,6 +41,14 @@ if st.session_state.get("totp_temp_token"):
     st.stop()
 
 # ── Login / Register tabs ────────────────────────────────
+st.title("Welcome to Vigil")
+st.caption("Automated tech watch system")
+
+# Show success message after registration
+if st.session_state.get("register_success"):
+    st.success("Account created! Please check your email to confirm your account.")
+    st.session_state.pop("register_success", None)
+
 tab_login, tab_register = st.tabs(["Login", "Create account"])
 
 with tab_login:
@@ -78,8 +76,7 @@ with tab_login:
                         st.session_state["access_token"] = data["access_token"]
                         st.session_state["refresh_token"] = data["refresh_token"]
                         st.session_state["user_email"] = email
-                        st.success("Logged in successfully!")
-                        st.switch_page("Home.py")
+                        st.rerun()
                 elif resp.status_code == 403:
                     detail = resp.json().get("detail", "")
                     if "verify" in detail.lower():
@@ -113,7 +110,8 @@ with tab_register:
                         "password": reg_password
                     })
                 if resp.status_code == 201:
-                    st.success("Account created! Please check your email to confirm your account.")
+                    st.session_state["register_success"] = True
+                    st.rerun()
                 elif resp.status_code == 409:
                     st.error("This email is already registered.")
                 else:

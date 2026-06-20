@@ -3,21 +3,10 @@ import httpx
 import pandas as pd
 import plotly.express as px
 import os
-from auth import require_auth, get_headers, logout
+from auth import get_headers
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
-st.set_page_config(page_title="Vigil", layout="wide")
-
-require_auth()
-
-# ── Sidebar ───────────────────────────────────────────────
-with st.sidebar:
-    st.markdown(f"**{st.session_state.get('user_email', 'User')}**")
-    if st.button("Logout", use_container_width=True):
-        logout()
-
-# ── Main ──────────────────────────────────────────────────
 st.title("Vigil - Tech Watch Dashboard")
 st.caption("Automated tech watch system with LLM scoring and feedback loop")
 
@@ -28,7 +17,6 @@ try:
         headers = get_headers()
         articles = client.get(f"{API_URL}/articles/?limit=500", headers=headers).json()
         themes = client.get(f"{API_URL}/themes/", headers=headers).json()
-        sources = client.get(f"{API_URL}/sources/", headers=headers).json()
         digests = client.get(f"{API_URL}/digests/", headers=headers).json()
 
     processed = [a for a in articles if a["processed"]]

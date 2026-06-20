@@ -49,11 +49,3 @@ def refresh_access_token() -> bool:
     except Exception:
         pass
     return False
-
-
-def require_auth():
-    """Call at the top of every protected page."""
-    if not is_authenticated():
-        st.warning("Please log in to access this page.")
-        st.page_link("pages/Login.py", label="Go to Login")
-        st.stop()
