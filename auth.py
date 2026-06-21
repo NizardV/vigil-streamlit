@@ -26,57 +26,6 @@ def fetch_user_info():
         pass
 
 
-def logout():
-    refresh_token = st.session_state.get("refresh_token", "")
-    if refresh_token:
-        try:
-            with httpx.Client() as client:
-                client.post(
-                    f"{API_URL}/auth/logout",
-                    json={"refresh_token": refresh_token},
-                    headers=get_headers()
-                )
-        except Exception:
-            pass
-    for key in ["access_token", "refresh_token", "user_email", "totp_enabled"]:
-        st.session_state.pop(key, None)
-    st.rerun()
-
-
-def refresh_access_token() -> bool:
-    refresh_token = st.session_state.get("refresh_token", "")
-    if not refresh_token:
-        return False
-    try:
-        with httpx.Client() as client:
-            resp = client.post(
-                f"{API_URL}/auth/refresh",
-                json={"refresh_token": refresh_token}
-            )
-        if resp.status_code == 200:
-            data = resp.json()
-            st.session_state["access_token"] = data["access_token"]
-            st.session_state["refresh_token"] = data["refresh_token"]
-            return True
-    except Exception:
-        pass
-    return False
-
-
-def create_session_cookie(access_token: str, refresh_token: str) -> str | None:
-    try:
-        with httpx.Client() as client:
-            resp = client.post(f"{API_URL}/auth/session", json={
-                "access_token": access_token,
-                "refresh_token": refresh_token,
-                "token_type": "bearer"
-            })
-        if resp.status_code == 200:
-            return resp.json().get("session_id")
-    except Exception:
-        pass
-    return None
-
 def restore_session(session_id: str) -> bool:
     try:
         with httpx.Client() as client:
