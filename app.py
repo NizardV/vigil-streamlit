@@ -7,7 +7,7 @@ API_URL_PUBLIC = "https://vigil.projet-cyna.fr/api"
 
 # ── Session restore via query param ──────────────────────
 if not is_authenticated():
-    session_id = st.query_params.get("session_id")
+    session_id = st.context.headers.get("x-session-id") or st.query_params.get("session_id")
     if session_id:
         if restore_session(session_id):
             st.query_params.clear()
