@@ -1,7 +1,7 @@
 import streamlit as st
 import httpx
 import os
-from auth import get_headers
+from auth import get_headers, get_cookies
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
@@ -11,7 +11,7 @@ st.title("Themes")
 
 try:
     with httpx.Client() as client:
-        themes = client.get(f"{API_URL}/themes/", headers=get_headers()).json()
+        themes = client.get(f"{API_URL}/themes/", cookies=get_cookies()).json()
 except Exception as e:
     st.error(f"Could not reach the API: {e}")
     st.stop()
@@ -35,7 +35,7 @@ with st.form("add_theme"):
                 "keywords": keywords or None,
                 "digest_hour": digest_hour,
                 "digest_enabled": digest_enabled,
-            }, headers=get_headers())
+            }, cookies=get_cookies())
         if resp.status_code == 201:
             st.success(f"Theme '{name}' created.")
             st.rerun()
@@ -71,11 +71,11 @@ else:
                             "name": theme["name"],
                             "digest_enabled": new_enabled,
                             "digest_hour": new_hour,
-                        }, headers=get_headers())
+                        }, cookies=get_cookies())
                     st.success("Settings saved.")
                     st.rerun()
 
             if st.button("Delete", key=f"del_theme_{theme['id']}"):
                 with httpx.Client() as client:
-                    client.delete(f"{API_URL}/themes/{theme['id']}", headers=get_headers())
+                    client.delete(f"{API_URL}/themes/{theme['id']}", cookies=get_cookies())
                 st.rerun()

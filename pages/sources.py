@@ -1,7 +1,7 @@
 ﻿import streamlit as st
 import httpx
 import os
-from auth import get_headers
+from auth import get_headers, get_cookies
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
@@ -19,8 +19,8 @@ SOURCE_ICONS = {
 
 try:
     with httpx.Client() as client:
-        themes = client.get(f"{API_URL}/themes/", headers=get_headers()).json()
-        sources = client.get(f"{API_URL}/sources/", headers=get_headers()).json()
+        themes = client.get(f"{API_URL}/themes/", cookies=get_cookies()).json()
+        sources = client.get(f"{API_URL}/sources/", cookies=get_cookies()).json()
 except Exception as e:
     st.error(f"Could not reach the API: {e}")
     st.stop()
@@ -57,7 +57,7 @@ with st.expander("➕ Add a source", expanded=True):
                             "type": "rss",
                             "active": True,
                             "fetch_interval_hours": fetch_interval,
-                        }, headers=get_headers())
+                        }, cookies=get_cookies())
                 if resp.status_code == 201:
                     data = resp.json()
                     st.success(f"Source added as **{data['type'].upper()}** — {data['url']}")
@@ -93,7 +93,7 @@ for source in sources:
 
     if col2.button("Toggle", key=f"toggle_{source['id']}"):
         with httpx.Client() as client:
-            client.post(f"{API_URL}/sources/{source['id']}/toggle", headers=get_headers())
+            client.post(f"{API_URL}/sources/{source['id']}/toggle", cookies=get_cookies())
         st.rerun()
 
     new_interval = col3.selectbox(
@@ -109,10 +109,10 @@ for source in sources:
                 "theme_id": source["theme_id"],
                 "url": source["url"],
                 "fetch_interval_hours": new_interval,
-            }, headers=get_headers())
+            }, cookies=get_cookies())
         st.rerun()
 
     if col4.button("🗑️", key=f"del_{source['id']}"):
         with httpx.Client() as client:
-            client.delete(f"{API_URL}/sources/{source['id']}", headers=get_headers())
+            client.delete(f"{API_URL}/sources/{source['id']}", cookies=get_cookies())
         st.rerun()

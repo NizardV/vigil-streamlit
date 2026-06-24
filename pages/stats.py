@@ -3,7 +3,7 @@ import httpx
 import pandas as pd
 import plotly.express as px
 import os
-from auth import get_headers
+from auth import get_headers, get_cookies
 
 API_URL = os.getenv("API_URL", "http://vigil_backend:8000/api")
 
