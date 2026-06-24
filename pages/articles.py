@@ -16,6 +16,36 @@ except Exception as e:
     st.error(f"Could not reach the API: {e}")
     st.stop()
 
+# ── Semantic search ───────────────────────────────────────
+search_query = st.text_input("🔍 Semantic search", placeholder="e.g. JWT authentication vulnerability")
+
+if search_query:
+    try:
+        with httpx.Client(timeout=15) as client:
+            articles = client.get(
+                f"{API_URL}/articles/search/semantic",
+                params={"q": search_query, "limit": 20},
+                cookies=get_cookies()
+            ).json()
+        st.caption(f"{len(articles)} articles found")
+        # affichage articles (même boucle que d'habitude)
+        for article in articles:
+            analysis = article.get("analysis") or {}
+            score = analysis.get("relevance_score", 0)
+            color = "🟢" if score >= 7 else "🟡" if score >= 4 else "🔴"
+            with st.expander(f"{color} {article['title']} - `{score}/10`"):
+                st.markdown(f"**Summary:** {analysis.get('summary', '-')}")
+                key_points = analysis.get('key_points') or []
+                if key_points:
+                    st.markdown("**Key points:**")
+                    for point in key_points:
+                        st.markdown(f"- {point}")
+                st.markdown(f"**Theme match:** `{analysis.get('theme_match', '-')}`")
+                st.markdown(f"[Read article]({article['url']})")
+        st.stop()
+    except Exception as e:
+        st.error(f"Search error: {e}")
+
 # ── Filters ───────────────────────────────────────────────
 
 theme_options = {t["name"]: t["id"] for t in themes}
