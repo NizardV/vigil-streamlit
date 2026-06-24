@@ -21,14 +21,13 @@ search_query = st.text_input("🔍 Semantic search", placeholder="e.g. JWT authe
 
 if search_query:
     try:
-        with httpx.Client(timeout=15) as client:
+        with httpx.Client(timeout=30) as client:
             articles = client.get(
                 f"{API_URL}/articles/search/semantic",
                 params={"q": search_query, "limit": 20},
                 cookies=get_cookies()
             ).json()
         st.caption(f"{len(articles)} articles found")
-        # affichage articles (même boucle que d'habitude)
         for article in articles:
             analysis = article.get("analysis") or {}
             score = analysis.get("relevance_score", 0)
@@ -42,12 +41,28 @@ if search_query:
                         st.markdown(f"- {point}")
                 st.markdown(f"**Theme match:** `{analysis.get('theme_match', '-')}`")
                 st.markdown(f"[Read article]({article['url']})")
+                st.divider()
+                fb_col1, fb_col2, fb_col3 = st.columns([1, 1, 4])
+                if fb_col1.button("👍 Relevant", key=f"s_like_{article['id']}"):
+                    with httpx.Client() as client:
+                        client.post(f"{API_URL}/feedback/", json={"article_id": article["id"], "rating": 1}, cookies=get_cookies())
+                    st.success("Feedback saved.")
+                    st.rerun()
+                if fb_col2.button("👎 Not relevant", key=f"s_dislike_{article['id']}"):
+                    with httpx.Client() as client:
+                        client.post(f"{API_URL}/feedback/", json={"article_id": article["id"], "rating": -1}, cookies=get_cookies())
+                    st.rerun()
+                comment = st.text_input("💬 Comment (optional)", key=f"s_comment_{article['id']}")
+                if st.button("Save comment", key=f"s_save_comment_{article['id']}") and comment:
+                    with httpx.Client() as client:
+                        client.post(f"{API_URL}/feedback/", json={"article_id": article["id"], "rating": 1, "comment": comment}, cookies=get_cookies())
+                    st.success("Comment saved.")
+                    st.rerun()
         st.stop()
     except Exception as e:
         st.error(f"Search error: {e}")
 
 # ── Filters ───────────────────────────────────────────────
-
 theme_options = {t["name"]: t["id"] for t in themes}
 theme_options["All"] = None
 
@@ -58,7 +73,6 @@ min_score = col2.slider("Minimum score", 1.0, 10.0, 1.0, 0.5)
 theme_id = theme_options[selected_theme]
 
 # ── Article list ──────────────────────────────────────────
-
 params = {"limit": 50}
 if theme_id:
     params["theme_id"] = theme_id
@@ -103,17 +117,18 @@ for article in filtered:
 
         if fb_col1.button("👍 Relevant", key=f"like_{article['id']}"):
             with httpx.Client() as client:
-                client.post(f"{API_URL}/feedback/", json={
-                    "article_id": article["id"],
-                    "rating": 1
-                }, cookies=get_cookies())
+                client.post(f"{API_URL}/feedback/", json={"article_id": article["id"], "rating": 1}, cookies=get_cookies())
             st.success("Feedback saved.")
             st.rerun()
 
         if fb_col2.button("👎 Not relevant", key=f"dislike_{article['id']}"):
             with httpx.Client() as client:
-                client.post(f"{API_URL}/feedback/", json={
-                    "article_id": article["id"],
-                    "rating": -1
-                }, cookies=get_cookies())
+                client.post(f"{API_URL}/feedback/", json={"article_id": article["id"], "rating": -1}, cookies=get_cookies())
+            st.rerun()
+
+        comment = st.text_input("💬 Comment (optional)", key=f"comment_{article['id']}")
+        if st.button("Save comment", key=f"save_comment_{article['id']}") and comment:
+            with httpx.Client() as client:
+                client.post(f"{API_URL}/feedback/", json={"article_id": article["id"], "rating": 1, "comment": comment}, cookies=get_cookies())
+            st.success("Comment saved.")
             st.rerun()
