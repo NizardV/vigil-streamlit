@@ -58,6 +58,13 @@ for article in filtered:
 
     with st.expander(f"{color} {article['title']} - `{score}/10`"):
         st.markdown(f"**Summary:** {analysis.get('summary', '-')}")
+
+        key_points = analysis.get('key_points', [])
+        if key_points:
+            st.markdown("**Key points:**")
+            for point in key_points:
+                st.markdown(f"- {point}")
+
         st.markdown(f"**Theme match:** `{analysis.get('theme_match', '-')}`")
         st.markdown(f"[Read article]({article['url']})")
 
